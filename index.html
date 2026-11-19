@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O Teste dos 3 Segundos no Mundo Real</title>
+<style>
+/* =====================================================================
+   O TESTE DOS 3 SEGUNDOS NO MUNDO REAL
+   Aplicação de quebra-gelo para sala de aula — arquivo único offline.
+   Tópicos: Impacto Social, Acessibilidade, Desempenho, Sustentabilidade
+            e Uso Responsável de Dados em aplicações Web.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. VARIÁVEIS DE DESIGN
+   --------------------------------------------------------------------- */
+:root{
+  --cor-barra-fundo: #0f172a;       /* azul-escuro (controle do professor) */
+  --cor-barra-texto: #f8fafc;
+  --cor-destaque:    #f59e0b;       /* âmbar — destaque ao "Revelar" */
+  --cor-primaria:    #2563eb;
+  --cor-perigo:      #dc2626;
+  --cor-sucesso:     #16a34a;
+  --cor-fundo-app:   #e5e7eb;
+  --cor-fundo-pagina:#ffffff;       /* fundo da landing page simulada */
+  --raio:            10px;
+  --sombra:          0 6px 18px rgba(15,23,42,.12);
+  --sombra-forte:    0 10px 30px rgba(15,23,42,.25);
+  --transicao:       .3s ease;
+}
+
+/* ---------------------------------------------------------------------
+   2. RESET E BASE
+   --------------------------------------------------------------------- */
+*{box-sizing:border-box;margin:0;padding:0}
+
+html{scroll-behavior:smooth}
+
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--cor-fundo-app);
+  color:#1f2937;
+  line-height:1.55;
+  /* Tipografia base maior p/ projeção em sala de aula */
+  font-size:1.05rem;
+}
+
+/* ---------------------------------------------------------------------
+   3. BARRA DE CONTROLE DO PROFESSOR (topo fixo)
+   --------------------------------------------------------------------- */
+.barra-professor{
+  position:sticky;
+  top:0;
+  z-index:200;
+  background:var(--cor-barra-fundo);
+  color:var(--cor-barra-texto);
+  padding:.6rem 1rem;
+  box-shadow:var(--sombra-forte);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.8rem;
+  justify-content:space-between;
+}
+
+.barra-professor .titulo-app{
+  font-size:1.15rem;
+  font-weight:700;
+  letter-spacing:.2px;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  white-space:nowrap;
+}
+.barra-professor .titulo-app .ponto{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--cor-destaque);
+  box-shadow:0 0 0 3px rgba(245,158,11,.25);
+}
+
+/* Grupo de botões de modo */
+.grupo-botoes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  align-items:center;
+}
+.btn{
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  font-weight:600;
+  font-size:.98rem;
+  padding:.6rem 1.1rem;
+  border-radius:var(--raio);
+  transition:var(--transicao);
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  border:2px solid transparent;
+}
+.btn:active{transform:translateY(1px)}
+.btn-revelar{background:var(--cor-destaque);color:#1f1300}
+.btn-revelar:hover{background:#fbbf24;box-shadow:0 0 0 4px rgba(245,158,11,.25)}
+.btn-ocultar{background:#475569;color:#fff}
+.btn-ocultar:hover{background:#64748b}
+.btn-resetar{background:transparent;color:#cbd5e1;border:2px solid #475569}
+.btn-resetar:hover{background:#1e293b;color:#fff;border-color:#94a3b8}
+
+/* Bloco do timer */
+.bloco-timer{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  background:#0b1220;
+  padding:.45rem .7rem;
+  border-radius:var(--raio);
+  border:1px solid #1e293b;
+}
+.bloco-timer .label-timer{
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#94a3b8;
+}
+#timer-display{
+  font-variant-numeric:tabular-nums;
+  font-size:1.5rem;
+  font-weight:800;
+  color:var(--cor-destaque);
+  min-width:5.2ch;
+  text-align:center;
+}
+#timer-display.timer-fim{
+  color:var(--cor-perigo);
+  animation:piscar 1s infinite;
+}
+@keyframes piscar{50%{opacity:.3}}
+.btn-timer{
+  background:#1e293b;color:#e2e8f0;
+  padding:.4rem .7rem;font-size:.85rem;border-radius:8px;
+}
+.btn-timer:hover{background:#334155}
+.btn-duracao{
+  background:#1e293b;color:#94a3b8;
+  padding:.35rem .6rem;font-size:.82rem;border-radius:8px;border:1px solid #334155;
+}
+.btn-duracao.ativo{background:var(--cor-primaria);color:#fff;border-color:var(--cor-primaria)}
+
+/* Indicador de modo atual */
+.modo-indicador{
+  font-size:.8rem;
+  padding:.3rem .7rem;
+  border-radius:999px;
+  background:#1e293b;
+  color:#94a3b8;
+  font-weight:600;
+}
+body.modo-revelar .modo-indicador{
+  background:var(--cor-destaque);
+  color:#1f1300;
+}
+
+/* ---------------------------------------------------------------------
+   4. ESTRUTURA DA PÁGINA SIMULADA (a "landing page" com barreiras)
+   --------------------------------------------------------------------- */
+.pagina-simulada{
+  max-width:1100px;
+  margin:1.5rem auto;
+  background:var(--cor-fundo-pagina);
+  border-radius:var(--raio);
+  box-shadow:var(--sombra);
+  overflow:hidden;
+  position:relative;
+}
+
+/* Aviso simulado de "página real" (banner topo da landing) */
+.banner-topo-simulada{
+  background:#f1f5f9;
+  border-bottom:1px solid #e2e8f0;
+  padding:.5rem 1rem;
+  font-size:.8rem;
+  color:#64748b;
+  text-align:center;
+  font-style:italic;
+}
+
+/* Hero da landing simulada */
+.hero{
+  position:relative;
+  padding:2.2rem 1.6rem;
+  background:linear-gradient(135deg,#1e3a8a,#3b82f6);
+  color:#fff;
+  overflow:hidden;
+}
+.hero h1{
+  font-size:clamp(1.6rem,4vw,2.6rem);
+  font-weight:800;
+  margin-bottom:.4rem;
+}
+/* PROBLEMA 1 — baixo contraste proposital */
+.hero .subtitulo-baixo-contraste{
+  font-size:1.05rem;
+  color:#93c5fd; /* azul-claro sobre azul — contraste insuficiente */
+  margin-bottom:.6rem;
+}
+.hero .badge-promo{
+  display:inline-block;
+  background:#fde047;
+  color:#1f1300;
+  font-weight:700;
+  padding:.3rem .8rem;
+  border-radius:999px;
+  font-size:.9rem;
+}
+
+/* Banner de "fechar" propositalmente inacessível (PROBLEMA 2) */
+.banner-fechar{
+  position:absolute;
+  top:.6rem;right:.6rem;
+  display:inline-block;
+  width:32px;height:32px;
+  line-height:32px;
+  text-align:center;
+  background:rgba(255,255,255,.15);
+  color:#fff;
+  border-radius:50%;
+  cursor:pointer;
+  font-weight:700;
+  user-select:none;
+  /* É um <div onclick>: NÃO é botão, NÃO tem aria-label, NÃO é focável por teclado */
+}
+
+/* Aviso de mídia pesada (PROBLEMA 3) */
+.aviso-peso{
+  background:#fff7ed;
+  border:1px dashed #fdba74;
+  color:#9a3412;
+  padding:.7rem 1rem;
+  margin:1rem 1.6rem;
+  border-radius:8px;
+  font-size:.92rem;
+  display:flex;
+  gap:.6rem;
+  align-items:flex-start;
+}
+.aviso-peso .icone{font-size:1.3rem;line-height:1}
+.aviso-peso strong{color:#7c2d12}
+
+/* Seção de benefícios (cards) */
+.beneficios{
+  padding:1.4rem 1.6rem;
+}
+.beneficios h2{
+  font-size:clamp(1.3rem,3vw,1.8rem);
+  margin-bottom:1rem;
+  color:#0f172a;
+}
+.grid-beneficios{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1rem;
+}
+.card-beneficio{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:1rem;
+}
+.card-beneficio .icone-card{font-size:1.6rem;margin-bottom:.4rem}
+.card-beneficio h3{font-size:1.1rem;margin-bottom:.3rem;color:#1e3a8a}
+/* Descrição em cinza muito claro (reforça PROBLEMA 1) */
+.card-beneficio p{color:#cbd5e1;font-size:.95rem}
+
+/* Tabela de planos que estoura em telas pequenas (PROBLEMA 6) */
+.planos{
+  padding:1.4rem 1.6rem 2.2rem;
+}
+.planos h2{
+  font-size:clamp(1.3rem,3vw,1.8rem);
+  margin-bottom:1rem;
+  color:#0f172a;
+}
+/* Container propositalmente SEM overflow-x:auto para gerar estouro horizontal */
+.tabela-planos-wrap{
+  /* Intencionalmente sem tratamento de overflow — gera barreira em telas estreitas */
+}
+.tabela-planos{
+  width:100%;
+  min-width:720px;          /* PROBLEMA 6: largura mínima fixa grande */
+  border-collapse:collapse;
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  overflow:hidden;
+}
+.tabela-planos th,.tabela-planos td{
+  padding:.8rem 1rem;
+  border-bottom:1px solid #e2e8f0;
+  text-align:left;
+}
+.tabela-planos th{
+  background:#1e3a8a;color:#fff;font-size:.95rem;
+}
+.tabela-planos tr:nth-child(even) td{background:#f8fafc}
+
+/* Formulário de inscrição (PROBLEMA 4 — coleta excessiva) */
+.inscricao{
+  padding:1.6rem;
+  background:#f1f5f9;
+  border-top:4px solid var(--cor-primaria);
+}
+.inscricao h2{
+  font-size:clamp(1.3rem,3vw,1.8rem);
+  margin-bottom:.3rem;
+  color:#0f172a;
+}
+.inscricao p.sub-insc{
+  color:#64748b;
+  margin-bottom:1rem;
+  font-size:.95rem;
+}
+.form-simulado{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:.9rem;
+}
+.campo{display:flex;flex-direction:column;gap:.25rem}
+.campo label{font-size:.85rem;color:#475569;font-weight:600}
+.campo input,.campo select{
+  padding:.6rem .7rem;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font-size:.95rem;
+  font-family:inherit;
+  background:#fff;
+}
+/* Campo sem label visível (reforça PROBLEMA 2) — usa só placeholder */
+.campo-sem-label input::placeholder{color:#94a3b8}
+.campo-full{grid-column:span 2}
+.linha-checkbox{
+  grid-column:span 2;
+  display:flex;
+  align-items:flex-start;
+  gap:.5rem;
+  font-size:.85rem;
+  color:#64748b;
+}
+.linha-checkbox input{margin-top:.2rem}
+
+/* Botão ambíguo "Enviar" (PROBLEMA 5) */
+.btn-ambiguo{
+  grid-column:span 2;
+  justify-self:start;
+  background:var(--cor-primaria);
+  color:#fff;
+  font-size:1.05rem;
+  font-weight:700;
+  padding:.8rem 2.2rem;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+}
+.btn-ambiguo:hover{background:#1d4ed8}
+
+/* Aviso de dados (reforça PROBLEMA 4) */
+.aviso-dados{
+  grid-column:span 2;
+  font-size:.78rem;
+  color:#94a3b8;
+  margin-top:.3rem;
+}
+
+/* ---------------------------------------------------------------------
+   5. BADGES NUMERADAS 1..6 (OCULTAS no modo aula; aparecem ao Revelar)
+   --------------------------------------------------------------------- */
+.area-problema{
+  position:relative;
+  display:block;
+  border-radius:8px;
+  transition:var(--transicao);
+}
+.badge{
+  position:absolute;
+  top:-12px;
+  left:-12px;
+  z-index:30;
+  width:40px;height:40px;
+  border-radius:50%;
+  background:var(--cor-destaque);
+  color:#1f1300;
+  font-weight:800;
+  font-size:1.25rem;
+  /* OCULTO no modo aula — nada de números na tela enquanto a turma procura */
+  display:none;
+  align-items:center;
+  justify-content:center;
+  border:3px solid #fff;
+  transition:var(--transicao);
+  cursor:default;
+}
+.badge::after{
+  content:"✓";
+  position:absolute;
+  right:-6px;bottom:-6px;
+  background:var(--cor-sucesso);
+  color:#fff;
+  width:18px;height:18px;
+  border-radius:50%;
+  font-size:.65rem;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Estado "Revelar" — agora os badges aparecem com destaque forte */
+body.modo-revelar .badge{
+  display:flex;
+  box-shadow:0 0 0 4px rgba(245,158,11,.35), var(--sombra-forte);
+  animation:badgePulse 2.2s infinite;
+}
+body.modo-revelar .area-problema{
+  outline:3px dashed var(--cor-destaque);
+  outline-offset:6px;
+  background:rgba(245,158,11,.06);
+}
+@keyframes badgePulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.35),var(--sombra-forte)}
+  50%{box-shadow:0 0 0 10px rgba(245,158,11,.12),var(--sombra-forte)}
+}
+
+/* ---------------------------------------------------------------------
+   6. PAINEL LATERAL DE RESPOSTAS ("Revelar Impacto Humano")
+   --------------------------------------------------------------------- */
+.painel-respostas{
+  position:fixed;
+  top:0;right:0;
+  height:100vh;
+  width:min(460px,100%);
+  background:#0f172a;
+  color:#e2e8f0;
+  box-shadow:-12px 0 40px rgba(0,0,0,.4);
+  transform:translateX(100%);
+  transition:transform .35s ease;
+  z-index:300;
+  display:flex;
+  flex-direction:column;
+}
+.painel-respostas.aberto{transform:translateX(0)}
+
+.painel-respostas .cabecalho-painel{
+  padding:1rem 1.2rem;
+  background:var(--cor-destaque);
+  color:#1f1300;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+}
+.painel-respostas .cabecalho-painel h2{
+  font-size:1.2rem;font-weight:800;
+}
+.painel-respostas .btn-fechar-painel{
+  background:rgba(31,19,0,.2);
+  border:none;
+  color:#1f1300;
+  font-size:1.3rem;
+  width:34px;height:34px;
+  border-radius:50%;
+  cursor:pointer;
+  font-weight:700;
+  line-height:1;
+}
+.painel-respostas .btn-fechar-painel:hover{background:rgba(31,19,0,.35)}
+
+.lista-respostas{
+  overflow-y:auto;
+  padding:1rem 1.2rem 2rem;
+  flex:1;
+}
+.item-resposta{
+  background:#1e293b;
+  border-left:5px solid var(--cor-destaque);
+  border-radius:8px;
+  padding:1rem 1rem 1rem 1.1rem;
+  margin-bottom:.9rem;
+}
+.item-resposta .num{
+  display:inline-flex;
+  align-items:center;justify-content:center;
+  width:30px;height:30px;
+  border-radius:50%;
+  background:var(--cor-destaque);
+  color:#1f1300;
+  font-weight:800;
+  margin-right:.5rem;
+  font-size:.95rem;
+}
+.item-resposta h3{
+  display:flex;align-items:center;
+  font-size:1.05rem;color:#fff;margin-bottom:.5rem;
+}
+.item-resposta .bloco{
+  margin-bottom:.55rem;
+  font-size:.92rem;
+  line-height:1.5;
+}
+.item-resposta .bloco .titulo-bloco{
+  display:block;
+  font-weight:700;
+  color:var(--cor-destaque);
+  text-transform:uppercase;
+  font-size:.72rem;
+  letter-spacing:.06em;
+  margin-bottom:.15rem;
+}
+.item-resposta .bloco.impacto .titulo-bloco{color:#fca5a5}
+.item-resposta .bloco.melhorar .titulo-bloco{color:#86efac}
+.item-resposta .bloco p{color:#cbd5e1}
+
+/* Overlay atrás do painel */
+.overlay-painel{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.45);
+  opacity:0;visibility:hidden;
+  transition:var(--transicao);
+  z-index:250;
+}
+.overlay-painel.ativo{opacity:1;visibility:visible}
+
+/* ---------------------------------------------------------------------
+   7. RODAPÉ INFORMATIVO DA APLICAÇÃO
+   --------------------------------------------------------------------- */
+.rodape-app{
+  text-align:center;
+  padding:1rem;
+  color:#64748b;
+  font-size:.85rem;
+}
+
+/* ---------------------------------------------------------------------
+   8. RESPONSIVIDADE GERAL
+   --------------------------------------------------------------------- */
+@media (max-width:760px){
+  .barra-professor{flex-direction:column;align-items:stretch}
+  .grupo-botoes{justify-content:center}
+  .grid-beneficios{grid-template-columns:1fr}
+  .form-simulado{grid-template-columns:1fr}
+  .campo-full{grid-column:span 1}
+  .linha-checkbox,.aviso-dados,.btn-ambiguo{grid-column:span 1}
+  /* A tabela de planos INTENCIONALMENTE continua estourando —
+     esse é o PROBLEMA 6 que os alunos devem identificar. */
+}
+
+/* Acessibilidade do app de aula em si (não da página simulada) */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+/* Foco visível para os controles do professor (boa prática) */
+.btn:focus-visible,.btn-timer:focus-visible,.btn-duracao:focus-visible,
+.painel-respostas .btn-fechar-painel:focus-visible{
+  outline:3px solid #fde047;
+  outline-offset:2px;
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     BARRA DE CONTROLE DO PROFESSOR
+     ===================================================================== -->
+<header class="barra-professor" role="banner">
+  <div class="titulo-app">
+    <span class="ponto" aria-hidden="true"></span>
+    O Teste dos 3 Segundos no Mundo Real
+  </div>
+
+  <span class="modo-indicador" id="modo-indicador">MODO AULA</span>
+
+  <div class="grupo-botoes" role="toolbar" aria-label="Controles do professor">
+    <button class="btn btn-revelar" id="btn-revelar" type="button">🔎 Revelar Respostas e Impacto</button>
+    <button class="btn btn-ocultar" id="btn-ocultar" type="button">↩ Ocultar / Voltar ao Teste</button>
+    <button class="btn btn-resetar" id="btn-resetar" type="button">⟲ Resetar</button>
+  </div>
+
+  <!-- Bloco do TIMER -->
+  <div class="bloco-timer" aria-label="Cronômetro regressivo para o debate">
+    <span class="label-timer">Debate</span>
+    <span id="timer-display" aria-live="off">03:00</span>
+    <button class="btn-duracao ativo" data-min="3" type="button">3 min</button>
+    <button class="btn-duracao" data-min="5" type="button">5 min</button>
+    <button class="btn-timer" id="btn-timer-iniciar" type="button">▶ Iniciar</button>
+    <button class="btn-timer" id="btn-timer-pausar" type="button">⏸ Pausar</button>
+    <button class="btn-timer" id="btn-timer-reiniciar" type="button">⟲ Reiniciar</button>
+  </div>
+</header>
+
+<!-- =====================================================================
+     PÁGINA SIMULADA — "A PÁGINA COM BARREIRAS REAIS"
+     Landing page de inscrição em curso, com 6 problemas propositalmente
+     embutidos. Os badges numerados 1..6 ficam sempre visíveis (discretos)
+     e são destacados quando o professor clica em "Revelar".
+     ===================================================================== -->
+<main class="pagina-simulada" aria-label="Página simulada com barreiras">
+
+  <div class="banner-topo-simulada">
+    🎬 Tela simulada para a dinâmica — encontre as barreiras reais que excluem pessoas.
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <!-- PROBLEMA 2: "X" de fechar como <div onclick>, sem teclado, sem aria-label -->
+    <div class="banner-fechar area-problema" data-problema="2"
+         onclick="this.parentElement.style.display='none'" title="">
+      ✕
+      <span class="badge" aria-hidden="true">2</span>
+    </div>
+
+    <span class="badge-promo">Inscrições abertas — vagas limitadas!</span>
+    <h1>Curso Completo de Marketing Digital</h1>
+
+    <!-- PROBLEMA 1: subtítulo em azul-claro sobre azul — baixo contraste -->
+    <p class="subtitulo-baixo-contraste area-problema" data-problema="1">
+      Aprenda a criar campanhas que vendem — mesmo começando do zero.
+      <span class="badge" aria-hidden="true">1</span>
+    </p>
+  </section>
+
+  <!-- AVISO DE PESO / DESEMPENHO (PROBLEMA 3) -->
+  <div class="aviso-peso area-problema" data-problema="3">
+    <span class="icone" aria-hidden="true">🎞️</span>
+    <div>
+      <strong>Carregando vídeo de apresentação (48&nbsp;MB)…</strong>
+      Sua experiência pode ficar lenta em conexões 3G ou aparelhos mais simples.
+      Aguarde enquanto otimizamos sua jornada.
+      <span class="badge" aria-hidden="true">3</span>
+    </div>
+  </div>
+
+  <!-- BENEFÍCIOS -->
+  <section class="beneficios">
+    <h2>Por que fazer este curso?</h2>
+    <div class="grid-beneficios">
+
+      <article class="card-beneficio">
+        <div class="icone-card" aria-hidden="true">🚀</div>
+        <h3>Resultados rápidos</h3>
+        <!-- Texto em cinza muito claro (reforça PROBLEMA 1) -->
+        <p>Método prático com cases reais do mercado atual.</p>
+      </article>
+
+      <article class="card-beneficio">
+        <div class="icone-card" aria-hidden="true">💼</div>
+        <h3>Carreira</h3>
+        <p>Prepare-se para atuar como analista ou consultor.</p>
+      </article>
+
+      <article class="card-beneficio">
+        <div class="icone-card" aria-hidden="true">📱</div>
+        <h3>Flexível</h3>
+        <p>Aulas 100% online, assista quando quiser.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- PLANOS — tabela com largura fixa que estoura em telas pequenas (PROBLEMA 6) -->
+  <section class="planos">
+    <h2>Compare os planos</h2>
+    <div class="tabela-planos-wrap area-problema" data-problema="6">
+      <table class="tabela-planos">
+        <thead>
+          <tr>
+            <th>Recurso</th>
+            <th>Básico</th>
+            <th>Profissional</th>
+            <th>Empresa</th>
+            <th>Black</th>
+            <th>VIP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Carga horária</td><td>20h</td><td>40h</td><td>60h</td><td>80h</td><td>120h</td></tr>
+          <tr><td>Mentorias</td><td>—</td><td>2</td><td>4</td><td>8</td><td>Ilimitadas</td></tr>
+          <tr><td>Certificado</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>Investimento</td><td>R$ 197</td><td>R$ 397</td><td>R$ 697</td><td>R$ 1.297</td><td>R$ 2.497</td></tr>
+        </tbody>
+      </table>
+      <span class="badge" aria-hidden="true">6</span>
+    </div>
+  </section>
+
+  <!-- FORMULÁRIO DE INSCRIÇÃO -->
+  <section class="inscricao">
+    <h2>Garanta sua vaga</h2>
+    <p class="sub-insc">Preencha o formulário abaixo para continuar.</p>
+
+    <form class="form-simulado" onsubmit="return false" aria-label="Formulário de inscrição">
+
+      <!-- PROBLEMA 4: coleta excessiva e pouco transparente de dados -->
+      <div class="area-problema" data-problema="4" style="grid-column:span 2">
+        <div class="form-simulado" style="grid-template-columns:repeat(2,1fr)">
+          <div class="campo">
+            <label for="f-nome">Nome completo</label>
+            <input id="f-nome" type="text" required>
+          </div>
+
+          <!-- Campo sem label visível — só placeholder (reforça PROBLEMA 2) -->
+          <div class="campo campo-sem-label">
+            <input type="text" placeholder="Como podemos te chamar?" aria-label="">
+          </div>
+
+          <div class="campo">
+            <label for="f-cpf">CPF</label>
+            <input id="f-cpf" type="text" required>
+          </div>
+
+          <div class="campo">
+            <label for="f-rg">RG</label>
+            <input id="f-rg" type="text" required>
+          </div>
+
+          <div class="campo">
+            <label for="f-nasc">Data de nascimento</label>
+            <input id="f-nasc" type="date" required>
+          </div>
+
+          <div class="campo">
+            <label for="f-renda">Renda mensal (R$)</label>
+            <input id="f-renda" type="number" required>
+          </div>
+
+          <div class="campo campo-full">
+            <label for="f-end">Endereço completo (rua, nº, bairro, cidade, estado, CEP)</label>
+            <input id="f-end" type="text" required>
+          </div>
+
+          <div class="campo">
+            <label for="f-estcivil">Estado civil</label>
+            <select id="f-estcivil" required>
+              <option value="">Selecione</option>
+              <option>Solteiro(a)</option>
+              <option>Casado(a)</option>
+              <option>Divorciado(a)</option>
+              <option>Viúvo(a)</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="f-prof">Profissão</label>
+            <input id="f-prof" type="text" required>
+          </div>
+        </div>
+
+        <!-- Aviso vago e sem transparência sobre o uso dos dados -->
+        <p class="aviso-dados">
+          Ao continuar, você concorda em compartilhar seus dados conosco e parceiros
+          para fins comerciais e de melhoria de serviço.
+        </p>
+        <span class="badge" aria-hidden="true">4</span>
+      </div>
+
+      <!-- Checkbox de termos sem link acessível aos termos -->
+      <div class="linha-checkbox">
+        <input type="checkbox" id="f-termos" required>
+        <label for="f-termos">Aceito os termos e condições.</label>
+      </div>
+
+      <!-- PROBLEMA 5: botão ambíguo "Enviar" — não diz o que acontece -->
+      <button class="btn-ambiguo area-problema" data-problema="5" type="submit">
+        Enviar
+        <span class="badge" aria-hidden="true">5</span>
+      </button>
+
+    </form>
+  </section>
+
+</main>
+
+<p class="rodape-app">
+  Aplicação educacional offline para debate em sala de aula —
+  Impacto Social, Acessibilidade, Desempenho, Sustentabilidade e Uso Responsável de Dados.
+</p>
+
+<!-- =====================================================================
+     OVERLAY + PAINEL LATERAL DE RESPOSTAS
+     ===================================================================== -->
+<div class="overlay-painel" id="overlay-painel" aria-hidden="true"></div>
+
+<aside class="painel-respostas" id="painel-respostas" aria-label="Painel de respostas e impacto humano" aria-hidden="true">
+  <div class="cabecalho-painel">
+    <h2>Revelar Impacto Humano</h2>
+    <button class="btn-fechar-painel" id="btn-fechar-painel" type="button" aria-label="Fechar painel de respostas">✕</button>
+  </div>
+
+  <div class="lista-respostas">
+
+    <!-- Resposta 1 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">1</span> Baixo contraste de texto</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>Texto azul-claro sobre fundo azul e descrições em cinza muito claro.
+        A diferença de luminância fica abaixo do mínimo recomendado (WCAG AA: 4.5:1).</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>Pessoas com baixa visão, daltonismo, presbiopia ou que enxergam em
+        ambientes com reflexo (luz da sala, projetor, sol na tela). Em projeção,
+        o texto "some" e ninguém consegue ler a oferta.</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Usar pares de cor com contraste ≥ 4.5:1 para texto normal e ≥ 3:1 para
+        texto grande. Testar com ferramentas como o WCAG Contrast Checker e
+        validar em diferentes telas e iluminações.</p>
+      </div>
+    </article>
+
+    <!-- Resposta 2 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">2</span> Elemento sem acessibilidade (teclado/leitor de tela)</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>O botão de "fechar" é um <code>&lt;div onclick&gt;</code>: não é focável por teclado,
+        não tem <code>role</code> nem <code>aria-label</code>. Há também campo de formulário
+        sem <code>&lt;label&gt;</code> associado (apenas placeholder).</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>Quem navega só por teclado (Tab/Enter), pessoas cegas que usam leitor de
+        tela, pessoas com tremores ou limitações motoras que não usam mouse,
+        e usuários de celular que dependem de navegação assistiva.</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Usar <code>&lt;button&gt;</code> com <code>aria-label</code> descritivo, garantir
+        foco visível, associar cada campo a um <code>&lt;label&gt;</code> (não usar
+        placeholder como rótulo) e testar o fluxo completo só com o teclado.</p>
+      </div>
+    </article>
+
+    <!-- Resposta 3 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">3</span> Excesso de peso e desperdício de recursos</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>Vídeo de 48&nbsp;MB carregado automaticamente, mídia não otimizada e
+        scripts pesados, sem estratégia de carregamento progressivo ou lazy-load.</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>Usuários em conexão 3G/instável, pessoas com celular básico ou plano de
+        dados limitado, e quem está em regiões com infraestrutura precária.
+        Também consome mais energia (bateria) e gera mais emissões de carbono
+        — um problema de sustentabilidade digital.</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Otimizar mídia (formatos modernos, compressão, dimensões corretas),
+        usar <code>loading="lazy"</code>, adiar scripts não essenciais, oferecer
+        versão leve e medir o peso real da página com Lighthouse.</p>
+      </div>
+    </article>
+
+    <!-- Resposta 4 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">4</span> Coleta excessiva e pouco transparente de dados</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>O formulário pede CPF, RG, renda, endereço completo, estado civil e
+        profissão — muito além do necessário para se inscrever em um curso —
+        com aviso vago sobre o uso ("parceiros", "fins comerciais").</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>Pessoas preocupadas com privacidade, vítimas de violação de dados,
+        usuários que desistem ao ver muitos campos obrigatórios, e quem não quer
+        compartilhar informação sensível (renda, religião implícita no estado civil)
+        sem motivo claro. Fere princípios da LGPD (finalidade, minimização).</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Aplicar minimização: pedir só o essencial (nome, e-mail, pagamento).
+        Explicar o porquê de cada dado, oferecer consentimento granular,
+        informar base legal e permitir cancelar o consentimento a qualquer momento.</p>
+      </div>
+    </article>
+
+    <!-- Resposta 5 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">5</span> Linguagem confusa / botão ambíguo</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>O botão "Enviar" não deixa claro o que acontece: inscreve? cobra?
+        compartilha dados? inicia teste gratuito? O usuário não sabe a consequência
+        do clique.</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>Pessoas menos familiarizadas com tecnologia, idosos, usuários com
+        ansiedade ou TDAH (medo de errar), e qualquer pessoa que hesita antes de
+        clicar em algo irreversível. Gera desconfiança e abandono.</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Usar rótulos de ação específicos: "Inscrever-se e ir para o pagamento",
+        "Começar teste gratuito de 7 dias". Indicar custos, próximos passos e
+        se a ação pode ser desfeita. Linguagem clara vale mais que design bonito.</p>
+      </div>
+    </article>
+
+    <!-- Resposta 6 -->
+    <article class="item-resposta">
+      <h3><span class="num" aria-hidden="true">6</span> Falta de adaptação a telas estreitas</h3>
+      <div class="bloco">
+        <span class="titulo-bloco">Problema</span>
+        <p>A tabela de planos tem <code>min-width:720px</code> fixo e o container
+        não trata overflow. Em celular, ela estoura a tela e exige rolagem
+        horizontal incômoda para comparar valores.</p>
+      </div>
+      <div class="bloco impacto">
+        <span class="titulo-bloco">Quem fica de fora ou se frustra</span>
+        <p>A maioria dos usuários — que acessa a internet pelo celular. Pessoas
+        em trânsito, no ônibus, com uma só mão livre, e quem tem telefones
+        pequenos/básicos. A barreira é invisível no desktop do designer.</p>
+      </div>
+      <div class="bloco melhorar">
+        <span class="titulo-bloco">Como melhorar</span>
+        <p>Adotar design responsivo (mobile-first): usar <code>overflow-x:auto</code>
+        com indicação visual de rolagem, reorganizar a tabela em cards empilhados
+        no celular, testar em devtools a 375px e em aparelhos reais.</p>
+      </div>
+    </article>
+
+  </div>
+</aside>
+
+<!-- =====================================================================
+     JAVASCRIPT — modos Revelar/Ocultar/Resetar e Timer
+     ===================================================================== -->
+<script>
+(function(){
+  "use strict";
+
+  /* ----- Atalhos DOM ----- */
+  var body        = document.body;
+  var btnRevelar  = document.getElementById('btn-revelar');
+  var btnOcultar  = document.getElementById('btn-ocultar');
+  var btnResetar  = document.getElementById('btn-resetar');
+  var painel      = document.getElementById('painel-respostas');
+  var overlay     = document.getElementById('overlay-painel');
+  var btnFechar   = document.getElementById('btn-fechar-painel');
+  var modoInd     = document.getElementById('modo-indicador');
+
+  /* ============================================================
+     MODO GABARITO — Revelar / Ocultar
+     ============================================================ */
+
+  // Abrir o painel e destacar os 6 problemas na tela simulada
+  function revelarRespostas(){
+    body.classList.add('modo-revelar');
+    painel.classList.add('aberto');
+    painel.setAttribute('aria-hidden','false');
+    overlay.classList.add('ativo');
+    overlay.setAttribute('aria-hidden','false');
+    modoInd.textContent = 'MODO GABARITO';
+    // Levar o foco ao painel para acessibilidade
+    painel.querySelector('h2').focus();
+  }
+
+  // Voltar ao modo aula (esconde destaque e painel)
+  function ocultarRespostas(){
+    body.classList.remove('modo-revelar');
+    painel.classList.remove('aberto');
+    painel.setAttribute('aria-hidden','true');
+    overlay.classList.remove('ativo');
+    overlay.setAttribute('aria-hidden','true');
+    modoInd.textContent = 'MODO AULA';
+    btnRevelar.focus();
+  }
+
+  // Resetar: volta ao modo aula, reinicia timer e limpa formulário
+  function resetarTudo(){
+    ocultarRespostas();
+    reiniciarTimer();
+    var form = document.querySelector('.form-simulado');
+    if(form){ form.reset(); }
+    // Reexibir o hero caso tenha sido fechado pelo "X" simulado
+    var hero = document.querySelector('.hero');
+    if(hero){ hero.style.display = ''; }
+  }
+
+  btnRevelar.addEventListener('click', revelarRespostas);
+  btnOcultar.addEventListener('click', ocultarRespostas);
+  btnResetar.addEventListener('click', resetarTudo);
+  btnFechar.addEventListener('click', ocultarRespostas);
+  overlay.addEventListener('click', ocultarRespostas);
+
+  // Tecla ESC fecha o painel
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && body.classList.contains('modo-revelar')){
+      ocultarRespostas();
+    }
+  });
+
+  /* ============================================================
+     TIMER REGRESSIVO — Iniciar / Pausar / Reiniciar / Duração
+     ============================================================ */
+  var display      = document.getElementById('timer-display');
+  var btnIniciar   = document.getElementById('btn-timer-iniciar');
+  var btnPausar    = document.getElementById('btn-timer-pausar');
+  var btnReiniciar = document.getElementById('btn-timer-reiniciar');
+  var botoesDur    = document.querySelectorAll('.btn-duracao');
+
+  var duracaoSeg   = 180;        // duração selecionada (default 3 min)
+  var restanteSeg  = duracaoSeg; // tempo restante
+  var intervalId   = null;
+  var rodando      = false;
+
+  // Formata segundos como MM:SS
+  function formatar(seg){
+    var m = Math.floor(seg/60);
+    var s = seg%60;
+    return (m<10?'0':'')+m + ':' + (s<10?'0':'')+s;
+  }
+
+  function atualizarDisplay(){
+    display.textContent = formatar(restanteSeg);
+    // Aviso sonoro/visual quando acaba
+    if(restanteSeg <= 0){
+      display.classList.add('timer-fim');
+    } else {
+      display.classList.remove('timer-fim');
+    }
+  }
+
+  function iniciarTimer(){
+    if(rodando) return;
+    if(restanteSeg <= 0) restanteSeg = duracaoSeg;
+    rodando = true;
+    display.setAttribute('aria-live','polite');
+    intervalId = setInterval(function(){
+      restanteSeg--;
+      atualizarDisplay();
+      if(restanteSeg <= 0){
+        clearInterval(intervalId);
+        intervalId = null;
+        rodando = false;
+        // Bip simples via WebAudio (offline, sem arquivos externos)
+        try{
+          var ctx = new (window.AudioContext||window.webkitAudioContext)();
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.001, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.8);
+          osc.start(); osc.stop(ctx.currentTime+0.8);
+        }catch(e){ /* silencioso se não suportado */ }
+      }
+    }, 1000);
+  }
+
+  function pausarTimer(){
+    if(intervalId){ clearInterval(intervalId); intervalId = null; }
+    rodando = false;
+  }
+
+  function reiniciarTimer(){
+    pausarTimer();
+    restanteSeg = duracaoSeg;
+    atualizarDisplay();
+  }
+
+  // Selecionar duração (3 ou 5 minutos)
+  function selecionarDuracao(min){
+    pausarTimer();
+    duracaoSeg = min*60;
+    restanteSeg = duracaoSeg;
+    atualizarDisplay();
+    botoesDur.forEach(function(b){
+      b.classList.toggle('ativo', Number(b.getAttribute('data-min')) === min);
+    });
+  }
+
+  btnIniciar.addEventListener('click', iniciarTimer);
+  btnPausar.addEventListener('click', pausarTimer);
+  btnReiniciar.addEventListener('click', reiniciarTimer);
+  botoesDur.forEach(function(b){
+    b.addEventListener('click', function(){
+      selecionarDuracao(Number(b.getAttribute('data-min')));
+    });
+  });
+
+  // Estado inicial
+  atualizarDisplay();
+
+})();
+</script>
+</body>
+</html>
